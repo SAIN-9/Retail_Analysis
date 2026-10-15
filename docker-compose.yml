@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: retail-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: retail
+    ports:
+      - "3307:3306"   # host:container -- avoids clashing with a local MySQL on 3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db_data:/var/lib/mysql
+
+  app:
+    build: .
+    container_name: retail-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpass
+      DB_NAME: retail
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+
+volumes:
+  db_data:
